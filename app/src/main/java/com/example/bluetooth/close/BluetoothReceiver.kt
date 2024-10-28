@@ -7,6 +7,7 @@ import android.content.Intent
 import android.os.Build.VERSION.SDK_INT
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.bluetooth.close.BluetoothHelper.connectedDevice
 import com.example.bluetooth.close.MainActivity.Companion.PERMISSION
 import com.example.bluetooth.close.MainActivity.Companion.TAG
 
@@ -17,6 +18,7 @@ class BluetoothReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action == "STOP_SERVICE") {
+            connectedDevice = null
             val serviceIntent = Intent(context, BluetoothService::class.java)
             context.stopService(serviceIntent)
         } else if (ContextCompat.checkSelfPermission(context, PERMISSION) == 0) {
@@ -37,14 +39,17 @@ class BluetoothReceiver : BroadcastReceiver() {
                     )
                     if (isConnected) {
                         device?.let {
+                            connectedDevice = device
                             val serviceIntent = Intent(context, BluetoothService::class.java)
-                            serviceIntent.putExtra(BluetoothDevice.EXTRA_DEVICE, it)
                             context.startService(serviceIntent)
                         }
                     } else {
-                        Log.i(TAG, "onReceive: stopService")
-                        val serviceIntent = Intent(context, BluetoothService::class.java)
-                        context.stopService(serviceIntent)
+                        if (connectedDevice == device) {
+                            connectedDevice = null
+                            Log.i(TAG, "onReceive: stopService")
+                            val serviceIntent = Intent(context, BluetoothService::class.java)
+                            context.stopService(serviceIntent)
+                        }
                     }
                 }
             }

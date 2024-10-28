@@ -1,8 +1,23 @@
+import java.io.ByteArrayOutputStream
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.jetbrains.kotlin.plugin.compose)
 }
+
+fun String.execute(currentWorkingDir: File = file("./")): String {
+    val byteOut = ByteArrayOutputStream()
+    rootProject.exec {
+        workingDir = currentWorkingDir
+        commandLine = split("\\s".toRegex())
+        standardOutput = byteOut
+    }
+    return String(byteOut.toByteArray()).trim()
+}
+
+val gitCommitCount = "git rev-list HEAD --count".execute().toInt()
+val gitCommitHash = "git rev-parse --verify --short HEAD".execute()
 
 android {
     namespace = "com.example.bluetooth.close"
@@ -12,8 +27,8 @@ android {
         applicationId = "com.example.bluetooth.close"
         minSdk = 31
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = gitCommitCount
+        versionName = gitCommitHash
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -42,7 +57,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
     packaging {
         resources {

@@ -4,19 +4,16 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.bluetooth.BluetoothDevice
 import android.content.Context
 import android.content.Intent
-import android.os.Build.VERSION.SDK_INT
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import com.example.bluetooth.close.BluetoothHelper.connectedDevice
 import com.example.bluetooth.close.BluetoothHelper.disconnectDevice
 import com.example.bluetooth.close.MainActivity.Companion.HOUR
 import com.example.bluetooth.close.MainActivity.Companion.MINUTE
 import com.example.bluetooth.close.MainActivity.Companion.PERMISSION
-import com.example.bluetooth.close.MainActivity.Companion.TAG
 import java.util.Timer
 import java.util.TimerTask
 
@@ -34,20 +31,7 @@ class BluetoothService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (ContextCompat.checkSelfPermission(this, PERMISSION) == 0) {
-            val device =
-                if (SDK_INT >= 33)
-                    intent?.getParcelableExtra(
-                        BluetoothDevice.EXTRA_DEVICE,
-                        BluetoothDevice::class.java
-                    )
-                else
-                    intent?.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE)
-            Log.d(
-                TAG,
-                "Device : ${device?.name} (${device?.address})"
-            )
-            device?.let {
-
+            connectedDevice?.let {
                 val pref = getSharedPreferences("settings", MODE_PRIVATE)
                 val hour = pref.getInt(HOUR, 0)
                 val minute = pref.getInt(MINUTE, 30)
@@ -58,11 +42,10 @@ class BluetoothService : Service() {
                 timer.schedule(object : TimerTask() {
                     override fun run() {
                         try {
-                            disconnectDevice(this@BluetoothService, it)
+                            disconnectDevice(this@BluetoothService)
                         } catch (e: Exception) {
                             e.printStackTrace()
                         }
-                        stopSelf()
                     }
                 }, time)
             }
@@ -81,12 +64,22 @@ class BluetoothService : Service() {
         intent.setAction("STOP_SERVICE")
         val stopIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
 
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MainActivity::class.java),
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle(getString(R.string.app_name))
             .setContentText("LIMIT: ${if (hour != 0) "${hour}h" else ""}${minute}min")
             .addAction(R.mipmap.ic_launcher, "STOP", stopIntent)
+            .setContentIntent(contentIntent)
+            .setOngoing(true)
             .build()
+
         startForeground(NOTIFICATION_ID, notification)
     }
 

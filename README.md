@@ -1,3 +1,3 @@
-# Dis-Bluetooth
+# Bluetooth-Close
 
-Automatically disconnect when reaching limit
+Automatically disconnect bluetooth device when reaching limit

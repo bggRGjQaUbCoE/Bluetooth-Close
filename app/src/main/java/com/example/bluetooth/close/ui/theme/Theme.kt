@@ -1,9 +1,6 @@
 package com.example.bluetooth.close.ui.theme
 
 import android.app.Activity
-import android.os.Build
-import android.os.Build.VERSION.SDK_INT
-import android.os.Build.VERSION_CODES.Q
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
